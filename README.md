@@ -2,9 +2,31 @@
 
 A [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that wraps the full [Campaign Monitor REST API v3.3](https://www.campaignmonitor.com/api/), giving Claude the ability to manage email campaigns, subscriber lists, journeys, segments, transactional email, and more via natural language.
 
+## Quick install (Mac)
+
+Open **Terminal** and run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/pauliowest/cmon-mcp/main/install.sh | bash
+```
+
+The script will:
+1. Check you have Node.js 18+ and Git (and tell you how to install them if not)
+2. Download this repo to `~/claude-tools/cmon-mcp`
+3. Build the server
+4. Ask for your Campaign Monitor API key
+5. Add the server to Claude Desktop automatically
+
+Then **quit and relaunch Claude Desktop** — Campaign Monitor will appear as a connected integration.
+
+> **API key:** find yours in Campaign Monitor under Account Settings → API Keys.  
+> **Agency accounts:** leave the Client ID blank — the server discovers all your clients automatically at startup.
+
+---
+
 ## Features
 
-**103 tools covering the complete Campaign Monitor API:**
+**113 tools covering the complete Campaign Monitor API:**
 
 - 📧 **Campaigns** — create, send, schedule, preview, and pull stats (opens, clicks, bounces, spam)
 - 👥 **Subscribers** — add, update, import in bulk, unsubscribe, delete, view history
@@ -21,9 +43,9 @@ A [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that wr
 - Node.js 18+
 - A [Campaign Monitor API key](https://help.campaignmonitor.com/api-keys)
 
-## Installation
+## Manual installation
 
-### Claude Desktop (manual)
+If you prefer to set things up yourself:
 
 1. Clone this repo and install dependencies:
 
@@ -44,7 +66,7 @@ npm run build
       "args": ["/path/to/cmon-mcp/dist/index.js"],
       "env": {
         "CM_API_KEY": "your_api_key_here",
-        "CM_CLIENT_ID": "your_client_id_here"
+        "CM_CLIENT_ID": ""
       }
     }
   }
@@ -52,10 +74,6 @@ npm run build
 ```
 
 3. Restart Claude Desktop.
-
-### Finding your Client ID
-
-If you're unsure of your Client ID, leave `CM_CLIENT_ID` blank and ask Claude to run `get_clients` — it will return all available clients and their IDs.
 
 ## Environment Variables
 
