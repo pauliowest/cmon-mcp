@@ -97,7 +97,7 @@ echo "  Your API key is found in Campaign Monitor under:"
 echo "  Account Settings → API Keys"
 echo ""
 echo -n "  Paste your API key and press Enter: "
-read -r CM_API_KEY
+read -r CM_API_KEY < /dev/tty
 echo ""
 
 if [ -z "$CM_API_KEY" ]; then
