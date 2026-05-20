@@ -762,6 +762,47 @@ export class CampaignMonitorClient {
     );
   }
 
+  async updateClientBasics(
+    clientId: string,
+    params: { CompanyName: string; Country: string; TimeZone: string }
+  ) {
+    return this.request<unknown>("PUT", `/clients/${clientId}/setbasics.json`, params);
+  }
+
+  async setClientPaygBilling(
+    clientId: string,
+    params: { Currency: string; CanPurchaseCredits: boolean; ClientPays: boolean; MarkupPercentage: number }
+  ) {
+    return this.request<unknown>("PUT", `/clients/${clientId}/setpaygbilling.json`, params);
+  }
+
+  async setClientMonthlyBilling(
+    clientId: string,
+    params: { Currency: string; ClientPays: boolean; MarkupPercentage: number; MonthlyScheme: string }
+  ) {
+    return this.request<unknown>("PUT", `/clients/${clientId}/setmonthlybilling.json`, params);
+  }
+
+  async copySendingDomain(clientId: string, domain: string, destinationClientId: string) {
+    return this.request<unknown>(
+      "POST",
+      `/clients/${clientId}/sendingdomains/copy.json`,
+      { Domain: domain, DestinationClientID: destinationClientId }
+    );
+  }
+
+  async authenticateSendingDomain(clientId: string, domain: string) {
+    return this.request<unknown>(
+      "PUT",
+      `/clients/${clientId}/sendingdomains/authenticate.json`,
+      { Domain: domain }
+    );
+  }
+
+  async createExternalSession(params: { Email: string; Chrome: string; Url: string; IntegratorID: string; ClientID: string }) {
+    return this.request<unknown>("PUT", `/externalsession.json`, params);
+  }
+
   // ─── Journeys ──────────────────────────────────────────────────────────────
 
   async getJourneys(clientId: string) {
@@ -841,6 +882,10 @@ export class CampaignMonitorClient {
     return this.request<unknown>("POST", `/events/publish/${clientId}`, params);
   }
 
+  async copyJourney(journeyId: string, clientId: string) {
+    return this.request<unknown>("POST", `/journeys/${journeyId}/copy.json`, { ClientID: clientId });
+  }
+
   // ─── Lists (extra) ─────────────────────────────────────────────────────────
 
   async getUnconfirmedSubscribers(
@@ -906,6 +951,15 @@ export class CampaignMonitorClient {
     return this.request<unknown>(
       "DELETE",
       `/lists/${listId}/customfields/${encodedKey}.json`
+    );
+  }
+
+  async updateCustomFieldOptions(listId: string, key: string, options: string[], keepExisting: boolean) {
+    const encodedKey = encodeURIComponent(key);
+    return this.request<unknown>(
+      "PUT",
+      `/lists/${listId}/customfields/${encodedKey}/options.json`,
+      { Options: options, KeepExistingOptions: keepExisting }
     );
   }
 

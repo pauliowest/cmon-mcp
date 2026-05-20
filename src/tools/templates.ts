@@ -8,6 +8,24 @@ export function registerTemplateTools(
   defaultClientId: string
 ): void {
   server.tool(
+    "list_templates",
+    "List all email templates for a client",
+    {
+      client_id: z.string().optional().describe("Client ID (uses default if not provided)"),
+    },
+    async ({ client_id }) => {
+      try {
+        const clientId = client_id || defaultClientId;
+        if (!clientId) throw new Error("client_id is required");
+        const result = await client.getTemplates(clientId);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
     "get_template",
     "Get details for an email template",
     {

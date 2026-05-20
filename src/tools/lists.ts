@@ -741,4 +741,24 @@ export function registerListTools(
       }
     }
   );
+
+  server.tool(
+    "update_custom_field_options",
+    "Update the options available for a multi-select or select custom field",
+    {
+      list_id: z.string().describe("The list ID"),
+      field_key: z.string().describe("The custom field key (e.g. [myfield])"),
+      options: z.string().describe("Comma-separated list of option values"),
+      keep_existing: z.boolean().optional().describe("Whether to keep existing options (default true)"),
+    },
+    async ({ list_id, field_key, options, keep_existing }) => {
+      try {
+        const optionsArray = options.split(",").map((o) => o.trim());
+        const result = await client.updateCustomFieldOptions(list_id, field_key, optionsArray, keep_existing ?? true);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true };
+      }
+    }
+  );
 }

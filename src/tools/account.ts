@@ -4,7 +4,8 @@ import { CampaignMonitorClient } from "../client.js";
 
 export function registerAccountTools(
   server: McpServer,
-  client: CampaignMonitorClient
+  client: CampaignMonitorClient,
+  defaultClientId: string = ""
 ): void {
   server.tool(
     "get_billing_details",
@@ -303,6 +304,32 @@ export function registerAccountTools(
           ],
           isError: true,
         };
+      }
+    }
+  );
+
+  server.tool(
+    "create_external_session",
+    "Initiate a new login session for embedding Campaign Monitor in an iframe",
+    {
+      email: z.string().email().describe("Email of the user to create a session for"),
+      chrome: z.string().describe("The chrome to apply: 'all', 'tabs', or 'none'"),
+      url: z.string().describe("The URL to load in the iframe"),
+      integrator_id: z.string().describe("Your integrator ID"),
+      client_id: z.string().optional().describe("Client ID to scope the session to"),
+    },
+    async ({ email, chrome, url, integrator_id, client_id }) => {
+      try {
+        const result = await client.createExternalSession({
+          Email: email,
+          Chrome: chrome,
+          Url: url,
+          IntegratorID: integrator_id,
+          ClientID: client_id || defaultClientId,
+        });
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true };
       }
     }
   );

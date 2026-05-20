@@ -297,4 +297,21 @@ export function registerJourneyTools(
       }
     }
   );
+
+  server.tool(
+    "copy_journey",
+    "Copy a journey to a specified client",
+    {
+      journey_id: z.string().describe("The journey ID to copy"),
+      client_id: z.string().describe("The destination client ID"),
+    },
+    async ({ journey_id, client_id }) => {
+      try {
+        const result = await client.copyJourney(journey_id, client_id);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true };
+      }
+    }
+  );
 }

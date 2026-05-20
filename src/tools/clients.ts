@@ -687,4 +687,108 @@ export function registerClientTools(
       }
     }
   );
+
+  server.tool(
+    "update_client_basics",
+    "Update a client's basic details including company name, country, and timezone",
+    {
+      client_id: z.string().optional().describe("Client ID (uses default if not provided)"),
+      company_name: z.string().describe("Company name"),
+      country: z.string().describe("Country name (use get_countries for valid values)"),
+      timezone: z.string().describe("Timezone (use get_timezones for valid values)"),
+    },
+    async ({ client_id, company_name, country, timezone }) => {
+      try {
+        const clientId = client_id || defaultClientId;
+        if (!clientId) throw new Error("client_id is required");
+        const result = await client.updateClientBasics(clientId, { CompanyName: company_name, Country: country, TimeZone: timezone });
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "set_client_payg_billing",
+    "Configure pay-as-you-go billing for a client",
+    {
+      client_id: z.string().optional().describe("Client ID (uses default if not provided)"),
+      currency: z.string().describe("Currency code e.g. USD, AUD"),
+      can_purchase_credits: z.boolean().describe("Whether the client can purchase credits"),
+      client_pays: z.boolean().describe("Whether the client pays directly"),
+      markup_percentage: z.number().describe("Markup percentage (0-100)"),
+    },
+    async ({ client_id, currency, can_purchase_credits, client_pays, markup_percentage }) => {
+      try {
+        const clientId = client_id || defaultClientId;
+        if (!clientId) throw new Error("client_id is required");
+        const result = await client.setClientPaygBilling(clientId, { Currency: currency, CanPurchaseCredits: can_purchase_credits, ClientPays: client_pays, MarkupPercentage: markup_percentage });
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "set_client_monthly_billing",
+    "Configure monthly billing for a client",
+    {
+      client_id: z.string().optional().describe("Client ID (uses default if not provided)"),
+      currency: z.string().describe("Currency code e.g. USD, AUD"),
+      client_pays: z.boolean().describe("Whether the client pays directly"),
+      markup_percentage: z.number().describe("Markup percentage (0-100)"),
+      monthly_scheme: z.string().describe("Monthly scheme name"),
+    },
+    async ({ client_id, currency, client_pays, markup_percentage, monthly_scheme }) => {
+      try {
+        const clientId = client_id || defaultClientId;
+        if (!clientId) throw new Error("client_id is required");
+        const result = await client.setClientMonthlyBilling(clientId, { Currency: currency, ClientPays: client_pays, MarkupPercentage: markup_percentage, MonthlyScheme: monthly_scheme });
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "copy_sending_domain",
+    "Copy a verified sending domain to another client",
+    {
+      client_id: z.string().optional().describe("Source client ID (uses default if not provided)"),
+      domain: z.string().describe("The domain to copy"),
+      destination_client_id: z.string().describe("The destination client ID"),
+    },
+    async ({ client_id, domain, destination_client_id }) => {
+      try {
+        const clientId = client_id || defaultClientId;
+        if (!clientId) throw new Error("client_id is required");
+        const result = await client.copySendingDomain(clientId, domain, destination_client_id);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true };
+      }
+    }
+  );
+
+  server.tool(
+    "authenticate_sending_domain",
+    "Verify DNS records and authenticate a sending domain for a client",
+    {
+      client_id: z.string().optional().describe("Client ID (uses default if not provided)"),
+      domain: z.string().describe("The domain to authenticate"),
+    },
+    async ({ client_id, domain }) => {
+      try {
+        const clientId = client_id || defaultClientId;
+        if (!clientId) throw new Error("client_id is required");
+        const result = await client.authenticateSendingDomain(clientId, domain);
+        return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true };
+      }
+    }
+  );
 }

@@ -41,7 +41,7 @@ registerListTools(server, client, defaultClientId);
 registerSubscriberTools(server, client);
 registerTransactionalTools(server, client, defaultClientId);
 registerClientTools(server, client, defaultClientId);
-registerAccountTools(server, client);
+registerAccountTools(server, client, defaultClientId);
 registerJourneyTools(server, client, defaultClientId);
 registerSegmentTools(server, client);
 registerTemplateTools(server, client, defaultClientId);

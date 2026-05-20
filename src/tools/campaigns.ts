@@ -689,4 +689,20 @@ export function registerCampaignTools(
       }
     }
   );
+
+  server.tool(
+    "unschedule_campaign",
+    "Unschedule a scheduled campaign and return it to draft status",
+    {
+      campaign_id: z.string().describe("The campaign ID to unschedule"),
+    },
+    async ({ campaign_id }) => {
+      try {
+        await client.unscheduleCampaign(campaign_id);
+        return { content: [{ type: "text", text: JSON.stringify({ success: true, message: `Campaign ${campaign_id} unscheduled.` }, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true };
+      }
+    }
+  );
 }
