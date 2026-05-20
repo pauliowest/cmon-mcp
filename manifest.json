@@ -1,0 +1,48 @@
+{
+  "manifest_version": "0.3",
+  "name": "campaign-monitor",
+  "display_name": "Campaign Monitor",
+  "version": "0.1.0",
+  "description": "Manage Campaign Monitor email campaigns, subscriber lists, and transactional email via natural language.",
+  "long_description": "A full-featured Campaign Monitor MCP server covering campaigns (create, send, schedule, stats), subscriber lists (CRUD, bulk import), transactional email (classic and smart email), and client management.",
+  "author": {
+    "name": "Paul West",
+    "email": "paulw@meetmarigold.com"
+  },
+  "icon": "icon.png",
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "CM_API_KEY": "${user_config.cm_api_key}",
+        "CM_CLIENT_ID": "${user_config.cm_client_id}"
+      }
+    }
+  },
+  "tools_generated": true,
+  "keywords": ["campaign-monitor", "email", "marketing", "campaigns", "subscribers"],
+  "compatibility": {
+    "platforms": ["darwin", "win32"],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  },
+  "user_config": {
+    "cm_api_key": {
+      "type": "string",
+      "title": "API Key",
+      "description": "Your Campaign Monitor API key (found under Account → API Keys)",
+      "sensitive": true,
+      "required": true
+    },
+    "cm_client_id": {
+      "type": "string",
+      "title": "Client ID",
+      "description": "Your Campaign Monitor Client ID (optional — tools that need it will prompt if not set)",
+      "required": false
+    }
+  }
+}
