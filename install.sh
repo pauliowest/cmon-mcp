@@ -86,8 +86,17 @@ fi
 print_step "Building"
 
 cd "$INSTALL_DIR"
-npm install --silent
-npm run build --silent
+
+if ! npm install --cache /tmp/npm-cache 2>&1; then
+  print_error "npm install failed. Check the output above for details."
+  exit 1
+fi
+
+if ! npm run build 2>&1; then
+  print_error "Build failed. Check the output above for details."
+  exit 1
+fi
+
 print_ok "Build complete"
 
 # ─── 5. Prompt for API key ────────────────────────────────────────────────────
