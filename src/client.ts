@@ -55,13 +55,14 @@ export class CampaignMonitorClient {
       throw new Error(errorMessage);
     }
 
-    // 204 No Content
+    // 204 No Content or empty body — return a success object so tool
+    // handlers always have something meaningful to show Claude
     if (response.status === 204) {
-      return undefined as unknown as T;
+      return { success: true } as unknown as T;
     }
 
     const text = await response.text();
-    if (!text) return undefined as unknown as T;
+    if (!text) return { success: true } as unknown as T;
     return JSON.parse(text) as T;
   }
 
@@ -179,21 +180,10 @@ export class CampaignMonitorClient {
     );
   }
 
-  async scheduleCampaign(
-    campaignId: string,
-    params: { ConfirmationEmail: string; SendDate: string }
-  ) {
-    return this.request<unknown>(
-      "POST",
-      `/campaigns/${campaignId}/schedule.json`,
-      params
-    );
-  }
-
   async unscheduleCampaign(campaignId: string) {
     return this.request<unknown>(
-      "DELETE",
-      `/campaigns/${campaignId}/schedule.json`
+      "POST",
+      `/campaigns/${campaignId}/unschedule.json`
     );
   }
 
@@ -211,8 +201,9 @@ export class CampaignMonitorClient {
     clientId: string,
     params: {
       Title: string;
+      UnsubscribeSetting: "AllClientLists" | "OnlyThisList";
+      ConfirmedOptIn: boolean;
       UnsubscribePage?: string;
-      ConfirmedOptInPage?: string;
       ConfirmationSuccessPage?: string;
     }
   ) {
@@ -227,8 +218,9 @@ export class CampaignMonitorClient {
     listId: string,
     params: {
       Title: string;
+      UnsubscribeSetting: "AllClientLists" | "OnlyThisList";
+      ConfirmedOptIn: boolean;
       UnsubscribePage?: string;
-      ConfirmedOptInPage?: string;
       ConfirmationSuccessPage?: string;
     }
   ) {
@@ -399,22 +391,30 @@ export class CampaignMonitorClient {
 
   // ─── Transactional ─────────────────────────────────────────────────────────
 
-  async sendClassicEmail(params: {
-    To: string[];
-    CC?: string[];
-    BCC?: string[];
-    From: string;
-    ReplyTo?: string;
-    Subject: string;
-    HTML?: string;
-    Text?: string;
-    Attachments?: Array<{ Name: string; Type: string; Content: string }>;
-    ConsentToTrack: "Yes" | "No" | "Unchanged";
-  }) {
+  async sendClassicEmail(
+    params: {
+      To: string[];
+      CC?: string[];
+      BCC?: string[];
+      From: string;
+      ReplyTo?: string;
+      Subject: string;
+      Html?: string;
+      Text?: string;
+      Attachments?: Array<{ Name: string; Type: string; Content: string }>;
+      ConsentToTrack: "Yes" | "No" | "Unchanged";
+      TrackOpens?: boolean;
+      TrackClicks?: boolean;
+      InlineCSS?: boolean;
+      Group?: string;
+    },
+    clientId?: string
+  ) {
     return this.request<unknown>(
       "POST",
       "/transactional/classicEmail/send",
-      params
+      params,
+      clientId ? { clientID: clientId } : undefined
     );
   }
 
@@ -735,19 +735,28 @@ export class CampaignMonitorClient {
     );
   }
 
-  async addSendingDomain(clientId: string, domain: string) {
+  async addSendingDomain(clientId: string, domain: string, selector?: string) {
+    const body: { SendingDomain: string; Selector?: string } = {
+      SendingDomain: domain,
+    };
+    if (selector !== undefined) body.Selector = selector;
     return this.request<unknown>(
       "POST",
       `/clients/${clientId}/sendingdomains.json`,
-      { Domain: domain }
+      body
     );
   }
 
-  async deleteSendingDomain(clientId: string, domain: string) {
+  async deleteSendingDomain(
+    clientId: string,
+    domain: string,
+    selector: string
+  ) {
     return this.request<unknown>(
       "DELETE",
       `/clients/${clientId}/sendingdomains.json`,
-      { Domain: domain }
+      undefined,
+      { sendingdomain: domain, selector }
     );
   }
 
@@ -778,24 +787,38 @@ export class CampaignMonitorClient {
 
   async setClientMonthlyBilling(
     clientId: string,
-    params: { Currency: string; ClientPays: boolean; MarkupPercentage: number; MonthlyScheme: string }
+    params: { Currency: string; ClientPays: boolean; MarkupPercentage: number; MonthlyScheme?: string }
   ) {
     return this.request<unknown>("PUT", `/clients/${clientId}/setmonthlybilling.json`, params);
   }
 
-  async copySendingDomain(clientId: string, domain: string, destinationClientId: string) {
+  async copySendingDomain(
+    clientId: string,
+    domain: string,
+    selector: string,
+    destinationClientId: string
+  ) {
     return this.request<unknown>(
       "POST",
       `/clients/${clientId}/sendingdomains/copy.json`,
-      { Domain: domain, DestinationClientID: destinationClientId }
+      {
+        SendingDomain: domain,
+        Selector: selector,
+        DestinationClientID: destinationClientId,
+      }
     );
   }
 
-  async authenticateSendingDomain(clientId: string, domain: string) {
+  async authenticateSendingDomain(
+    clientId: string,
+    domain: string,
+    selector: string
+  ) {
     return this.request<unknown>(
       "PUT",
       `/clients/${clientId}/sendingdomains/authenticate.json`,
-      { Domain: domain }
+      undefined,
+      { sendingdomain: domain, selector }
     );
   }
 
@@ -882,8 +905,26 @@ export class CampaignMonitorClient {
     return this.request<unknown>("POST", `/events/publish/${clientId}`, params);
   }
 
-  async copyJourney(journeyId: string, clientId: string) {
-    return this.request<unknown>("POST", `/journeys/${journeyId}/copy.json`, { ClientID: clientId });
+  async copyJourney(
+    journeyId: string,
+    destinationClientId: string,
+    destinationListId: string,
+    name?: string
+  ) {
+    const body: {
+      DestinationClientID: string;
+      DestinationListID: string;
+      Name?: string;
+    } = {
+      DestinationClientID: destinationClientId,
+      DestinationListID: destinationListId,
+    };
+    if (name !== undefined) body.Name = name;
+    return this.request<unknown>(
+      "POST",
+      `/journeys/${journeyId}/copy.json`,
+      body
+    );
   }
 
   // ─── Lists (extra) ─────────────────────────────────────────────────────────
@@ -923,6 +964,7 @@ export class CampaignMonitorClient {
     params: {
       FieldName: string;
       DataType: string;
+      Options?: string[];
       VisibleInPreferenceCenter?: boolean;
     }
   ) {

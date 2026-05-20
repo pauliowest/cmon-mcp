@@ -5,7 +5,8 @@ import { CampaignMonitorClient } from "../client.js";
 export function registerJourneyTools(
   server: McpServer,
   client: CampaignMonitorClient,
-  defaultClientId: string
+  defaultClientId: string,
+  clientHint: string = ""
 ): void {
   server.tool(
     "get_journeys",
@@ -14,7 +15,7 @@ export function registerJourneyTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ client_id }) => {
       try {
@@ -251,15 +252,17 @@ export function registerJourneyTools(
 
   server.tool(
     "publish_journey_event",
-    "Publish an event to trigger a subscriber activity journey",
+    'Publish an event to trigger a subscriber activity journey. event_data must be a JSON string with the structure: { "ContactID": { "Email": "user@example.com" }, "EventName": "event-name", "Data": {} }',
     {
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
       event_data: z
         .string()
-        .describe("Event data as a JSON string (e.g. subscriber email and event fields)"),
+        .describe(
+          'Event data as a JSON string. Required structure: { "ContactID": { "Email": "user@example.com" }, "EventName": "event-name", "Data": { ... } }'
+        ),
     },
     async ({ client_id, event_data }) => {
       try {
@@ -300,14 +303,16 @@ export function registerJourneyTools(
 
   server.tool(
     "copy_journey",
-    "Copy a journey to a specified client",
+    "Copy a journey to a specified client and list",
     {
       journey_id: z.string().describe("The journey ID to copy"),
-      client_id: z.string().describe("The destination client ID"),
+      client_id: z.string().describe(`Client ID${clientHint}`),
+      destination_list_id: z.string().describe("The destination list ID for the copied journey"),
+      name: z.string().optional().describe("Optional new name for the copied journey"),
     },
-    async ({ journey_id, client_id }) => {
+    async ({ journey_id, client_id, destination_list_id, name }) => {
       try {
-        const result = await client.copyJourney(journey_id, client_id);
+        const result = await client.copyJourney(journey_id, client_id, destination_list_id, name);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return { content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true };

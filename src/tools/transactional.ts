@@ -9,7 +9,8 @@ const consentToTrackSchema = z
 export function registerTransactionalTools(
   server: McpServer,
   client: CampaignMonitorClient,
-  defaultClientId: string
+  defaultClientId: string,
+  clientHint: string = ""
 ): void {
   server.tool(
     "send_classic_email",
@@ -24,20 +25,56 @@ export function registerTransactionalTools(
       reply_to: z.string().optional().describe("Reply-to email address"),
       html: z.string().optional().describe("HTML body of the email"),
       text: z.string().optional().describe("Plain-text body of the email"),
+      track_opens: z.boolean().optional().describe("Whether to track opens"),
+      track_clicks: z.boolean().optional().describe("Whether to track link clicks"),
+      inline_css: z
+        .boolean()
+        .optional()
+        .describe("Whether to inline CSS styles into the HTML"),
+      group: z
+        .string()
+        .optional()
+        .describe("Classic email group name to associate this send with"),
+      client_id: z
+        .string()
+        .optional()
+        .describe(`Client ID${clientHint}`),
     },
-    async ({ to, from, subject, consent_to_track, cc, bcc, reply_to, html, text }) => {
+    async ({
+      to,
+      from,
+      subject,
+      consent_to_track,
+      cc,
+      bcc,
+      reply_to,
+      html,
+      text,
+      track_opens,
+      track_clicks,
+      inline_css,
+      group,
+      client_id,
+    }) => {
       try {
-        const result = await client.sendClassicEmail({
-          To: to,
-          From: from,
-          Subject: subject,
-          ConsentToTrack: consent_to_track,
-          CC: cc,
-          BCC: bcc,
-          ReplyTo: reply_to,
-          HTML: html,
-          Text: text,
-        });
+        const result = await client.sendClassicEmail(
+          {
+            To: to,
+            From: from,
+            Subject: subject,
+            ConsentToTrack: consent_to_track,
+            CC: cc,
+            BCC: bcc,
+            ReplyTo: reply_to,
+            Html: html,
+            Text: text,
+            TrackOpens: track_opens,
+            TrackClicks: track_clicks,
+            InlineCSS: inline_css,
+            Group: group,
+          },
+          client_id ?? defaultClientId
+        );
         return {
           content: [
             { type: "text", text: JSON.stringify(result, null, 2) },
@@ -107,7 +144,7 @@ export function registerTransactionalTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ client_id }) => {
       try {
@@ -156,7 +193,7 @@ export function registerTransactionalTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ from, to, timezone, group, client_id }) => {
       try {
@@ -203,7 +240,7 @@ export function registerTransactionalTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ status, count, client_id }) => {
       try {
@@ -264,7 +301,7 @@ export function registerTransactionalTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ client_id }) => {
       try {

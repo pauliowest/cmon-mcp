@@ -5,7 +5,8 @@ import { CampaignMonitorClient } from "../client.js";
 export function registerCampaignTools(
   server: McpServer,
   client: CampaignMonitorClient,
-  defaultClientId: string
+  defaultClientId: string,
+  clientHint: string = ""
 ): void {
   server.tool(
     "list_campaigns",
@@ -14,7 +15,7 @@ export function registerCampaignTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ client_id }) => {
       try {
@@ -47,7 +48,7 @@ export function registerCampaignTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ client_id }) => {
       try {
@@ -80,7 +81,7 @@ export function registerCampaignTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ client_id }) => {
       try {
@@ -342,7 +343,9 @@ export function registerCampaignTools(
         .string()
         .url()
         .optional()
-        .describe("URL to the HTML content of the campaign"),
+        .describe(
+          "URL to the HTML content of the campaign (either html_url or text_url required)"
+        ),
       text_url: z
         .string()
         .url()
@@ -359,7 +362,7 @@ export function registerCampaignTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({
       name,
@@ -537,6 +540,11 @@ export function registerCampaignTools(
       from_email: z.string().email().describe("Sender email address"),
       reply_to: z.string().email().describe("Reply-to email address"),
       template_id: z.string().describe("The template ID to use"),
+      template_content: z
+        .string()
+        .describe(
+          "TemplateContent as a JSON string with keys Singlelines, Multilines, Images, Repeaters (see Campaign Monitor docs)"
+        ),
       list_ids: z
         .string()
         .describe("Comma-separated list of subscriber list IDs to send to"),
@@ -547,7 +555,7 @@ export function registerCampaignTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({
       name,
@@ -556,6 +564,7 @@ export function registerCampaignTools(
       from_email,
       reply_to,
       template_id,
+      template_content,
       list_ids,
       segment_ids,
       client_id,
@@ -571,6 +580,20 @@ export function registerCampaignTools(
               .map((s) => s.trim())
               .filter(Boolean)
           : undefined;
+        let parsedTemplateContent: object;
+        try {
+          parsedTemplateContent = JSON.parse(template_content) as object;
+        } catch {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "Error: template_content must be a valid JSON string",
+              },
+            ],
+            isError: true,
+          };
+        }
         const result = await client.createCampaignFromTemplate(
           client_id ?? defaultClientId,
           {
@@ -581,7 +604,8 @@ export function registerCampaignTools(
             ReplyTo: reply_to,
             ListIDs: listIdArray,
             SegmentIDs: segmentIdArray,
-            Template: { TemplateID: template_id },
+            TemplateID: template_id,
+            TemplateContent: parsedTemplateContent,
           }
         );
         return {

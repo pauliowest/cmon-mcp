@@ -5,7 +5,8 @@ import { CampaignMonitorClient } from "../client.js";
 export function registerAccountTools(
   server: McpServer,
   client: CampaignMonitorClient,
-  defaultClientId: string = ""
+  defaultClientId: string = "",
+  clientHint: string = ""
 ): void {
   server.tool(
     "get_billing_details",
@@ -313,10 +314,10 @@ export function registerAccountTools(
     "Initiate a new login session for embedding Campaign Monitor in an iframe",
     {
       email: z.string().email().describe("Email of the user to create a session for"),
-      chrome: z.string().describe("The chrome to apply: 'all', 'tabs', or 'none'"),
+      chrome: z.string().describe("The chrome to apply: 'All', 'Tabs', or 'None' (capitalised)"),
       url: z.string().describe("The URL to load in the iframe"),
       integrator_id: z.string().describe("Your integrator ID"),
-      client_id: z.string().optional().describe("Client ID to scope the session to"),
+      client_id: z.string().optional().describe(`Client ID${clientHint}`),
     },
     async ({ email, chrome, url, integrator_id, client_id }) => {
       try {

@@ -5,13 +5,14 @@ import { CampaignMonitorClient } from "../client.js";
 export function registerTemplateTools(
   server: McpServer,
   client: CampaignMonitorClient,
-  defaultClientId: string
+  defaultClientId: string,
+  clientHint: string = ""
 ): void {
   server.tool(
     "list_templates",
     "List all email templates for a client",
     {
-      client_id: z.string().optional().describe("Client ID (uses default if not provided)"),
+      client_id: z.string().optional().describe(`Client ID${clientHint}`),
     },
     async ({ client_id }) => {
       try {
@@ -59,12 +60,12 @@ export function registerTemplateTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
       html_page_url: z
         .string()
         .url()
         .optional()
-        .describe("URL to the HTML page for the template"),
+        .describe("HTML page URL (required unless providing zip_file_url)"),
       zip_file_url: z
         .string()
         .url()
@@ -108,7 +109,7 @@ export function registerTemplateTools(
         .string()
         .url()
         .optional()
-        .describe("URL to the HTML page for the template"),
+        .describe("HTML page URL (required unless providing zip_file_url)"),
       zip_file_url: z
         .string()
         .url()

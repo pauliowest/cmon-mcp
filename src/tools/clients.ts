@@ -5,7 +5,8 @@ import { CampaignMonitorClient } from "../client.js";
 export function registerClientTools(
   server: McpServer,
   client: CampaignMonitorClient,
-  defaultClientId = ""
+  defaultClientId = "",
+  clientHint: string = ""
 ): void {
   server.tool(
     "get_clients",
@@ -37,7 +38,7 @@ export function registerClientTools(
     "get_client_details",
     "Get detailed information about a specific Campaign Monitor client",
     {
-      client_id: z.string().describe("The client ID"),
+      client_id: z.string().describe(`Client ID${clientHint}`),
     },
     async ({ client_id }) => {
       try {
@@ -102,7 +103,7 @@ export function registerClientTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ client_id }) => {
       try {
@@ -144,7 +145,7 @@ export function registerClientTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ email, client_id }) => {
       try {
@@ -176,7 +177,7 @@ export function registerClientTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
       page: z.number().int().positive().optional().describe("Page number"),
       page_size: z
         .number()
@@ -219,7 +220,7 @@ export function registerClientTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ emails, client_id }) => {
       try {
@@ -256,7 +257,7 @@ export function registerClientTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ email, client_id }) => {
       try {
@@ -288,7 +289,7 @@ export function registerClientTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ client_id }) => {
       try {
@@ -326,7 +327,7 @@ export function registerClientTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ email, name, access_level, password, client_id }) => {
       try {
@@ -370,7 +371,7 @@ export function registerClientTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ current_email, new_email, name, access_level, client_id }) => {
       try {
@@ -408,7 +409,7 @@ export function registerClientTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ email, client_id }) => {
       try {
@@ -449,7 +450,7 @@ export function registerClientTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ client_id }) => {
       try {
@@ -481,7 +482,7 @@ export function registerClientTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ email, client_id }) => {
       try {
@@ -513,7 +514,7 @@ export function registerClientTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ client_id }) => {
       try {
@@ -544,7 +545,7 @@ export function registerClientTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ client_id }) => {
       try {
@@ -573,16 +574,21 @@ export function registerClientTools(
     "Add a sending domain for a client",
     {
       domain: z.string().describe("The domain name to add (e.g. 'example.com')"),
+      selector: z
+        .string()
+        .optional()
+        .describe("The DKIM selector (e.g. 'cm')"),
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
-    async ({ domain, client_id }) => {
+    async ({ domain, selector, client_id }) => {
       try {
         const result = await client.addSendingDomain(
           client_id ?? defaultClientId,
-          domain
+          domain,
+          selector
         );
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
@@ -608,14 +614,21 @@ export function registerClientTools(
       domain: z
         .string()
         .describe("The domain name to delete (e.g. 'example.com')"),
+      selector: z
+        .string()
+        .describe("The DKIM selector (e.g. 'cm')"),
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
-    async ({ domain, client_id }) => {
+    async ({ domain, selector, client_id }) => {
       try {
-        await client.deleteSendingDomain(client_id ?? defaultClientId, domain);
+        await client.deleteSendingDomain(
+          client_id ?? defaultClientId,
+          domain,
+          selector
+        );
         return {
           content: [
             {
@@ -660,7 +673,7 @@ export function registerClientTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ credits, can_use_my_credits, client_id }) => {
       try {
@@ -692,7 +705,7 @@ export function registerClientTools(
     "update_client_basics",
     "Update a client's basic details including company name, country, and timezone",
     {
-      client_id: z.string().optional().describe("Client ID (uses default if not provided)"),
+      client_id: z.string().optional().describe(`Client ID${clientHint}`),
       company_name: z.string().describe("Company name"),
       country: z.string().describe("Country name (use get_countries for valid values)"),
       timezone: z.string().describe("Timezone (use get_timezones for valid values)"),
@@ -713,7 +726,7 @@ export function registerClientTools(
     "set_client_payg_billing",
     "Configure pay-as-you-go billing for a client",
     {
-      client_id: z.string().optional().describe("Client ID (uses default if not provided)"),
+      client_id: z.string().optional().describe(`Client ID${clientHint}`),
       currency: z.string().describe("Currency code e.g. USD, AUD"),
       can_purchase_credits: z.boolean().describe("Whether the client can purchase credits"),
       client_pays: z.boolean().describe("Whether the client pays directly"),
@@ -735,11 +748,11 @@ export function registerClientTools(
     "set_client_monthly_billing",
     "Configure monthly billing for a client",
     {
-      client_id: z.string().optional().describe("Client ID (uses default if not provided)"),
+      client_id: z.string().optional().describe(`Client ID${clientHint}`),
       currency: z.string().describe("Currency code e.g. USD, AUD"),
       client_pays: z.boolean().describe("Whether the client pays directly"),
       markup_percentage: z.number().describe("Markup percentage (0-100)"),
-      monthly_scheme: z.string().describe("Monthly scheme name"),
+      monthly_scheme: z.string().optional().describe("Monthly scheme name"),
     },
     async ({ client_id, currency, client_pays, markup_percentage, monthly_scheme }) => {
       try {
@@ -757,15 +770,16 @@ export function registerClientTools(
     "copy_sending_domain",
     "Copy a verified sending domain to another client",
     {
-      client_id: z.string().optional().describe("Source client ID (uses default if not provided)"),
+      client_id: z.string().optional().describe(`Client ID${clientHint}`),
       domain: z.string().describe("The domain to copy"),
-      destination_client_id: z.string().describe("The destination client ID"),
+      selector: z.string().describe("The DKIM selector (e.g. 'cm')"),
+      destination_client_id: z.string().describe(`Client ID${clientHint}`),
     },
-    async ({ client_id, domain, destination_client_id }) => {
+    async ({ client_id, domain, selector, destination_client_id }) => {
       try {
         const clientId = client_id || defaultClientId;
         if (!clientId) throw new Error("client_id is required");
-        const result = await client.copySendingDomain(clientId, domain, destination_client_id);
+        const result = await client.copySendingDomain(clientId, domain, selector, destination_client_id);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return { content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true };
@@ -777,14 +791,15 @@ export function registerClientTools(
     "authenticate_sending_domain",
     "Verify DNS records and authenticate a sending domain for a client",
     {
-      client_id: z.string().optional().describe("Client ID (uses default if not provided)"),
+      client_id: z.string().optional().describe(`Client ID${clientHint}`),
       domain: z.string().describe("The domain to authenticate"),
+      selector: z.string().describe("The DKIM selector (e.g. 'cm')"),
     },
-    async ({ client_id, domain }) => {
+    async ({ client_id, domain, selector }) => {
       try {
         const clientId = client_id || defaultClientId;
         if (!clientId) throw new Error("client_id is required");
-        const result = await client.authenticateSendingDomain(clientId, domain);
+        const result = await client.authenticateSendingDomain(clientId, domain, selector);
         return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return { content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }], isError: true };

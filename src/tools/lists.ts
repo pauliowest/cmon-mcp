@@ -5,7 +5,8 @@ import { CampaignMonitorClient } from "../client.js";
 export function registerListTools(
   server: McpServer,
   client: CampaignMonitorClient,
-  defaultClientId: string
+  defaultClientId: string,
+  clientHint: string = ""
 ): void {
   server.tool(
     "get_lists",
@@ -14,7 +15,7 @@ export function registerListTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({ client_id }) => {
       try {
@@ -43,16 +44,19 @@ export function registerListTools(
     "Create a new subscriber list",
     {
       title: z.string().describe("The name of the new list"),
+      unsubscribe_setting: z
+        .enum(["AllClientLists", "OnlyThisList"])
+        .describe(
+          "Whether unsubscribes apply to all client lists or only this list"
+        ),
+      confirmed_opt_in: z
+        .boolean()
+        .describe("Whether this list uses confirmed (double) opt-in"),
       unsubscribe_page: z
         .string()
         .url()
         .optional()
         .describe("URL for the unsubscribe confirmation page"),
-      confirmed_opt_in_page: z
-        .string()
-        .url()
-        .optional()
-        .describe("URL for the confirmed opt-in page"),
       confirmation_success_page: z
         .string()
         .url()
@@ -61,12 +65,13 @@ export function registerListTools(
       client_id: z
         .string()
         .optional()
-        .describe("Client ID (defaults to CM_CLIENT_ID env var)"),
+        .describe(`Client ID${clientHint}`),
     },
     async ({
       title,
+      unsubscribe_setting,
+      confirmed_opt_in,
       unsubscribe_page,
-      confirmed_opt_in_page,
       confirmation_success_page,
       client_id,
     }) => {
@@ -75,8 +80,9 @@ export function registerListTools(
           client_id ?? defaultClientId,
           {
             Title: title,
+            UnsubscribeSetting: unsubscribe_setting,
+            ConfirmedOptIn: confirmed_opt_in,
             UnsubscribePage: unsubscribe_page,
-            ConfirmedOptInPage: confirmed_opt_in_page,
             ConfirmationSuccessPage: confirmation_success_page,
           }
         );
@@ -133,16 +139,19 @@ export function registerListTools(
     {
       list_id: z.string().describe("The list ID"),
       title: z.string().describe("New name for the list"),
+      unsubscribe_setting: z
+        .enum(["AllClientLists", "OnlyThisList"])
+        .describe(
+          "Whether unsubscribes apply to all client lists or only this list"
+        ),
+      confirmed_opt_in: z
+        .boolean()
+        .describe("Whether this list uses confirmed (double) opt-in"),
       unsubscribe_page: z
         .string()
         .url()
         .optional()
         .describe("URL for the unsubscribe confirmation page"),
-      confirmed_opt_in_page: z
-        .string()
-        .url()
-        .optional()
-        .describe("URL for the confirmed opt-in page"),
       confirmation_success_page: z
         .string()
         .url()
@@ -152,15 +161,17 @@ export function registerListTools(
     async ({
       list_id,
       title,
+      unsubscribe_setting,
+      confirmed_opt_in,
       unsubscribe_page,
-      confirmed_opt_in_page,
       confirmation_success_page,
     }) => {
       try {
         const result = await client.updateList(list_id, {
           Title: title,
+          UnsubscribeSetting: unsubscribe_setting,
+          ConfirmedOptIn: confirmed_opt_in,
           UnsubscribePage: unsubscribe_page,
-          ConfirmedOptInPage: confirmed_opt_in_page,
           ConfirmationSuccessPage: confirmation_success_page,
         });
         return {
@@ -472,16 +483,26 @@ export function registerListTools(
         .describe(
           "Data type: 'Text', 'Number', 'MultiSelectOne', 'MultiSelectMany', 'Date', or 'Country'"
         ),
+      options: z
+        .string()
+        .optional()
+        .describe(
+          "Comma-separated list of option values (required for MultiSelectOne and MultiSelectMany types)"
+        ),
       visible_in_preference_center: z
         .boolean()
         .optional()
         .describe("Whether the field is visible in the subscriber preference center"),
     },
-    async ({ list_id, field_name, data_type, visible_in_preference_center }) => {
+    async ({ list_id, field_name, data_type, options, visible_in_preference_center }) => {
       try {
+        const optionsArray = options
+          ? options.split(",").map((o) => o.trim()).filter(Boolean)
+          : undefined;
         const result = await client.createCustomField(list_id, {
           FieldName: field_name,
           DataType: data_type,
+          Options: optionsArray,
           VisibleInPreferenceCenter: visible_in_preference_center,
         });
         return {
@@ -512,8 +533,7 @@ export function registerListTools(
       field_name: z.string().describe("New name for the custom field"),
       visible_in_preference_center: z
         .boolean()
-        .optional()
-        .describe("Whether the field is visible in the subscriber preference center"),
+        .describe("Whether to show this field in the preference center"),
     },
     async ({ list_id, field_key, field_name, visible_in_preference_center }) => {
       try {
